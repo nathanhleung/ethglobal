@@ -1,3 +1,7 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    // shadcn input breaks this rule
+    "@typescript-eslint/no-empty-object-type": "off",
+  }
 }
