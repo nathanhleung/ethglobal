@@ -2,6 +2,8 @@
 
 Using fully-homomorphic encryption on Fhenix to implement second-price sealed bid auctions, and using LayerZero to allow bids from any chain, unifying liquidity: a global secret auction across all chains.
 
+<img src="./screenshot.png" alt="screenshot" width="300"/>
+
 ## User Flow
 1. Auction creator creates an auction contract on Fhenix.
     1. The auction creator sets an auction start / end date, minimum bid, and code to run when the auction is won (e.g. automatically send an NFT). This code can be run cross-chain using LayerZero.
