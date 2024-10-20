@@ -12,6 +12,7 @@ Using fully-homomorphic encryption on Fhenix to implement second-price sealed bi
 1. We use LayerZero to send the encrypted bid to our auction smart contract on Fhenix.
     1. The auction contract stores the encrypted bit and the chain from which the bid originated.
     1. Since it’s difficult to install on LayerZero on new chains, we’re actually sending via Sepolia (the base cain for the Fhenix L2)
+    1. Since LayerZero has a limit of around 10kb per message but Fhenix encrypted numbers are about 17kb, we split the message into two parts
 1. At the end of the auction period, the contract uses FHE to compare all bids and determine which bid is the highest
 1. We use LayerZero to send a message back to the chain from which the bid originated and transfer the assets from the winning bidder.
     1. If the transfer is unsuccessful, LayerZero can send message back and Fhenix contract can move on to next highest bidder
