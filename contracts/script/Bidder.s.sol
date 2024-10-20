@@ -12,7 +12,8 @@ contract BidderScript is Script {
     function run() public {
         vm.startBroadcast();
 
-        bidder = new Bidder();
+        address LAYERZERO_LOCAL_ENDPOINT = 0x6EDCE65403992e310A62460808c4b910D972f10f;
+        bidder = new Bidder(LAYERZERO_LOCAL_ENDPOINT, msg.sender);
 
         vm.stopBroadcast();
     }
