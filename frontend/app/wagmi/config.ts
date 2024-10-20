@@ -12,7 +12,7 @@ import {
   morphSepolia,
 } from "wagmi/chains";
 import { fhenix } from "./fhenix";
-import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
+import { injected, walletConnect } from "wagmi/connectors";
 
 export function getConfig() {
   return createConfig({
@@ -31,7 +31,6 @@ export function getConfig() {
     ],
     connectors: [
       injected(),
-      coinbaseWallet(),
       walletConnect({ projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID! }),
     ],
     storage: createStorage({

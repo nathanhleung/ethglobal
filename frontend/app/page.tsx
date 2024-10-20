@@ -39,9 +39,13 @@ export default function Home() {
       return;
     }
 
-    console.log(bid);
-    const encryptedBid = await fhenixClient.encrypt_uint256(bid);
-    console.log(encryptedBid);
+    try {
+      console.log({bid});
+      const encryptedBid = await fhenixClient.encrypt_uint256(bid);
+      console.log({encryptedBid});
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   return (
@@ -147,7 +151,7 @@ export default function Home() {
                       type="button"
                       disabled={status === "pending"}
                     >
-                      {connector.name}
+                      {connector.name === 'Injected' ? 'Browser Extension' : connector.name}
                     </Button>
                   ))}
                 </div>
