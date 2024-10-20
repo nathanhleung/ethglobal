@@ -5,6 +5,6 @@ declare global {
     // From `script` tag in `layout.tsx`
     fhenixjs: {
       fhenixjs: fhenixjs;
-    }
+    };
   }
 }

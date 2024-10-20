@@ -42,7 +42,7 @@ export default function RootLayout({
          * WASM bundling is hard to get right on Next.js, so we just use the prebuilt version:
          * https://github.com/FhenixProtocol/fhenix.js?tab=readme-ov-file#browser-installation-or-simpler-bundling
          */}
-        <Script src="https://cdn.jsdelivr.net/npm/fhenixjs@0.3.0/dist/fhenix.umd.min.js" />
+        <Script src="https://cdn.jsdelivr.net/npm/fhenixjs@0.4.0/dist/fhenix.umd.min.js" />
         <Providers initialState={initialState}>{children}</Providers>
       </body>
     </html>

@@ -1,5 +1,6 @@
 import { http, cookieStorage, createConfig, createStorage } from "wagmi";
 import {
+  anvil,
   arbitrumSepolia,
   flowTestnet,
   polygonAmoy,
@@ -17,6 +18,7 @@ import { injected, walletConnect } from "wagmi/connectors";
 export function getConfig() {
   return createConfig({
     chains: [
+      anvil,
       sepolia,
       arbitrumSepolia,
       storyTestnet,
@@ -38,6 +40,7 @@ export function getConfig() {
     }),
     ssr: true,
     transports: {
+      [anvil.id]: http(),
       [sepolia.id]: http(),
       [arbitrumSepolia.id]: http(),
       [storyTestnet.id]: http(),

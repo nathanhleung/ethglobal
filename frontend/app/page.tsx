@@ -1,5 +1,6 @@
 "use client";
 
+import bidderJson from "@/../contracts/out/Bidder.sol/Bidder.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,12 +11,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { BIDDER_CONTRACT_ADDRESSES } from "@/constants";
 import { useFhenixClient } from "@/hooks/useFhenixClient";
 import Image from "next/image";
-import { useState } from "react";
-import { useAccount, useConfig, useConnect, useDisconnect } from "wagmi";
+import { useEffect, useState } from "react";
+import {
+  useAccount,
+  useConfig,
+  useConnect,
+  useDisconnect,
+  useSwitchChain,
+  useWriteContract,
+} from "wagmi";
 import { getChains } from "wagmi/actions";
 import { fhenix } from "./wagmi/fhenix";
+import { parseEther } from "viem";
+
+const bidderAbi = bidderJson.abi;
 
 export default function Home() {
   const account = useAccount();
@@ -28,6 +40,14 @@ export default function Home() {
   const selectedChain = chains.find(
     (chain) => chain.id === Number(selectedChainId)
   );
+  useEffect(() => {
+    if (!selectedChainId) {
+      setTimeout(() => disconnect(), 50);
+    }
+  }, [selectedChainId, disconnect]);
+
+  const { switchChainAsync } = useSwitchChain();
+  const { writeContractAsync, isPending } = useWriteContract();
 
   const { fhenixClient, isLoading: isFhenixClientLoading } = useFhenixClient();
   const [bid, setBid] = useState<string>("");
@@ -35,16 +55,44 @@ export default function Home() {
   async function onSubmitEncryptedBid(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (!fhenixClient) {
+    if (!fhenixClient || !selectedChain || isPending) {
       return;
     }
 
     try {
-      console.log({bid});
-      const encryptedBid = await fhenixClient.encrypt_uint256(bid);
-      console.log({encryptedBid});
+      const encryptedBid = await fhenixClient.encrypt_uint8(Number(bid));
+
+      console.log({ encryptedBid });
+
+      await switchChainAsync({
+        // @ts-ignore
+        chainId: selectedChain.id,
+      });
+
+      const tx = await writeContractAsync({
+        address: BIDDER_CONTRACT_ADDRESSES[selectedChain.id],
+        abi: bidderAbi,
+        value: parseEther("1"),
+        functionName: "sendBid",
+        args: [
+          {
+            data: `0x${Array.from(encryptedBid.data)
+              .map((i) => i.toString(16).padStart(2, "0"))
+              .join("")}`,
+            securityZone: 0
+          },
+        ],
+      });
+
+      console.log({ tx });
     } catch (e) {
       console.log(e);
+
+      // If the bid fails, switch back to Fhenix Helium to re-encrypt the bid.
+      await switchChainAsync({
+        // @ts-ignore
+        chainId: fhenix.id,
+      });
     }
   }
 
@@ -57,7 +105,22 @@ export default function Home() {
           {account.chain && (
             <p>
               Encrypting on {fhenix.name}, then submitting bid on{" "}
-              {selectedChain?.name}.
+              {selectedChain?.name}{" "}
+              {selectedChain && selectedChain.blockExplorers && (
+                <>
+                  <code>Bidder</code> contract at{" "}
+                  <a
+                    className="text-black underline underline-offset-4 hover:opacity-50"
+                    href={`${
+                      selectedChain.blockExplorers.default.url
+                    }/address/${BIDDER_CONTRACT_ADDRESSES[selectedChain.id]}`}
+                    target="_blank"
+                  >
+                    {BIDDER_CONTRACT_ADDRESSES[selectedChain.id]}
+                  </a>
+                </>
+              )}
+              .
             </p>
           )}
           <form onSubmit={onSubmitEncryptedBid} className="flex flex-col gap-2">
@@ -69,8 +132,11 @@ export default function Home() {
                 onChange={(e) => setBid(e.target.value)}
                 disabled={isFhenixClientLoading}
               />
-              <Button type="submit" disabled={isFhenixClientLoading}>
-                Submit Encrypted Bid
+              <Button
+                type="submit"
+                disabled={isFhenixClientLoading || isPending}
+              >
+                {isPending ? "Submitting..." : "Submit Encrypted Bid"}
               </Button>
             </div>
             <small className="text-muted-foreground">
@@ -94,7 +160,7 @@ export default function Home() {
           <div className="flex flex-col gap-4 w-full">
             <h2 className="text-2xl font-bold">Connect</h2>
             <div className="flex flex-col gap-2">
-              <Label>Select a chain</Label>
+              <Label>Select a chain to bid on</Label>
               <Select
                 value={selectedChainId?.toString() ?? ""}
                 onValueChange={(value) => setSelectedChainId(value)}
@@ -129,9 +195,14 @@ export default function Home() {
                     className="text-black underline underline-offset-4 hover:opacity-50"
                   >
                     fully homomorphic encryption
-                  </a>
-                  . Then, your encrypted bid will be submitted on{" "}
-                  {selectedChain?.name}.
+                  </a>{" "}
+                  (FHE).
+                  <br />
+                  <br />
+                  Then, your encrypted bid will be submitted on{" "}
+                  {selectedChain?.name}, where it will be relayed to Fhenix
+                  Helium and secretly compared with other bids from other chains
+                  using FHE.
                 </small>
               )}
             </div>
@@ -151,7 +222,9 @@ export default function Home() {
                       type="button"
                       disabled={status === "pending"}
                     >
-                      {connector.name === 'Injected' ? 'Browser Extension' : connector.name}
+                      {connector.name === "Injected"
+                        ? "Browser Extension"
+                        : connector.name}
                     </Button>
                   ))}
                 </div>

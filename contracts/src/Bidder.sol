@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {inEuint128} from "lib/fhenix-contracts/contracts/FHE.sol";
+import {inEuint8} from "lib/fhenix-contracts/contracts/FHE.sol";
 import {OApp, Origin, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
@@ -10,13 +10,19 @@ import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/
 contract Bidder is OApp {
     using OptionsBuilder for bytes;
 
-    uint32 public constant RELAY_BID_CHAIN_ID = 11155111; // Sepolia
+    event ReceivedData(string data);
+
+    uint32 public constant RELAY_BID_EID = 	40161; // Sepolia
 
     /// @param _endpoint The address of the local LayerZero endpoint.
     /// @param _owner The address of the owner of the contract.
     constructor(address _endpoint, address _owner) OApp(_endpoint, _owner) Ownable(_owner) {}
 
-    function sendBid(inEuint128 calldata encryptedBid) external {
+    function hello() external payable {
+        emit ReceivedData("hello!");
+    }
+
+    function sendBid(inEuint8 calldata encryptedBid) external payable {
         bytes memory _payload = abi.encode(msg.sender, block.chainid, encryptedBid);
         bytes memory _options = OptionsBuilder
             .newOptions()
@@ -25,11 +31,11 @@ contract Bidder is OApp {
 
         // Send bid to Sepolia
         _lzSend(
-            RELAY_BID_CHAIN_ID,
+            RELAY_BID_EID,
             _payload,
             _options,
             // Fee in native gas and ZRO token.
-            MessagingFee(0, 0),
+            MessagingFee(msg.value, 0),
             // Refund address in case of failed source message.
             payable(msg.sender)
         );
@@ -52,5 +58,6 @@ contract Bidder is OApp {
         // Decode the payload to get the message
         // In this case, type is string, but depends on your encoding!
         string memory data = abi.decode(payload, (string));
+        emit ReceivedData(data);
     }
 }
